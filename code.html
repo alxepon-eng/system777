@@ -3,677 +3,301 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>U Coffee Case Study - ระบบวิเคราะห์ข้อมูลยอดขายรายวัน</title>
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Font Awesome Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Chart.js -->
+    <title>ระบบวิเคราะห์การเข้าใช้ห้องพัก (Hotel Booking Analytics)</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600&display=swap" rel="stylesheet">
+    
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700&display=swap');
-        
-        * {
-            font-family: 'Noto Sans Thai', sans-serif;
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --accent-color: #e74c3c;
+            --bg-color: #f4f7f6;
+            --card-bg: #ffffff;
         }
-        
-        .step-indicator {
-            transition: all 0.3s ease;
+
+        body {
+            font-family: 'Sarabun', sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 20px;
+            color: #333;
         }
-        
-        .step-indicator.active {
-            box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.2);
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
         }
-        
-        .step-indicator.completed {
-            background-color: #10b981;
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            color: var(--primary-color);
+            margin-bottom: 5px;
+        }
+
+        .step-label {
+            background-color: var(--primary-color);
             color: white;
-            border-color: #10b981;
-        }
-        
-        .chart-bar {
-            transition: all 0.3s ease;
-        }
-        
-        .chart-bar:hover {
-            opacity: 0.8;
-        }
-        
-        .card-hover {
-            transition: all 0.3s ease;
-        }
-        
-        .card-hover:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
-        }
-        
-        .fade-in {
-            animation: fadeIn 0.5s ease-in-out;
-        }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        
-        .scrollbar-custom {
-            scrollbar-width: thin;
-            scrollbar-color: #d1d5db #f3f4f6;
-        }
-        
-        .scrollbar-custom::-webkit-scrollbar {
-            width: 6px;
-        }
-        
-        .scrollbar-custom::-webkit-scrollbar-track {
-            background: #f3f4f6;
-        }
-        
-        .scrollbar-custom::-webkit-scrollbar-thumb {
-            background-color: #d1d5db;
+            padding: 5px 15px;
             border-radius: 20px;
+            font-size: 0.9em;
+            display: inline-block;
+            margin-bottom: 10px;
         }
+
+        /* Card Styles */
+        .card {
+            background: var(--card-bg);
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            padding: 20px;
+            margin-bottom: 25px;
+            transition: transform 0.2s;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        /* Step 1: Metrics Grid */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .metric-item {
+            text-align: center;
+            padding: 15px;
+            border-left: 5px solid var(--secondary-color);
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        .metric-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        .metric-title {
+            color: #7f8c8d;
+            font-size: 0.9em;
+        }
+
+        /* Step 2: Charts */
+        .charts-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .charts-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .chart-box {
+            position: relative;
+            height: 300px;
+        }
+
+        /* Step 3: Storytelling */
+        .story-content {
+            background-color: #e8f6f3;
+            border-radius: 10px;
+            padding: 20px;
+            border-left: 5px solid #27ae60;
+        }
+
+        .story-point {
+            margin-bottom: 10px;
+            display: flex;
+            align-items: start;
+        }
+
+        .story-icon {
+            margin-right: 10px;
+            color: #27ae60;
+            font-weight: bold;
+        }
+
     </style>
 </head>
-<body class="bg-amber-50">
-    <!-- Header -->
-    <header class="bg-amber-900 text-white p-6 shadow-lg">
-        <div class="max-w-6xl mx-auto">
-            <div class="flex items-center justify-between">
-                <div class="flex items-center gap-4">
-                    <div class="bg-white p-3 rounded-full text-amber-900">
-                        <i class="fas fa-coffee text-2xl"></i>
-                    </div>
-                    <div>
-                        <h1 class="text-2xl md:text-3xl font-bold">U Coffee Case Study</h1>
-                        <p class="text-amber-200 text-sm md:text-base">ระบบวิเคราะห์ข้อมูลยอดขายรายวัน</p>
-                    </div>
-                </div>
-                <div class="text-right hidden md:block">
-                    <p class="text-sm opacity-80">Data Source: ข้อมูลร้านกาแฟ.xlsx</p>
-                    <p class="text-xs opacity-60">Last Updated: Today</p>
-                </div>
-            </div>
-        </div>
+<body>
+
+<div class="container">
+    
+    <header>
+        <h1>Booking Analytics Dashboard</h1>
+        <p>รายงานสรุปผลการดำเนินงานห้องพัก</p>
     </header>
 
-    <!-- Main Content -->
-    <main class="max-w-6xl mx-auto p-4 md:p-8">
-        <!-- Stepper -->
-        <div class="mb-8 md:mb-12">
-            <div class="flex justify-between items-center relative">
-                <div class="absolute left-0 top-1/2 w-full h-2 bg-gray-200 -z-10 rounded-full"></div>
-                
-                <!-- Step 1 -->
-                <div class="relative z-10 flex flex-col items-center group">
-                    <div class="step-indicator w-12 h-12 rounded-full flex items-center justify-center border-4 border-white bg-amber-600 text-white font-bold text-lg shadow-lg active">
-                        1
-                    </div>
-                    <span class="text-sm font-medium mt-2 text-amber-900">ข้อมูลดิบ & ตารางสรุป</span>
+    <div class="card">
+        <span class="step-label">Step 1: ภาพรวมข้อมูล (Overview)</span>
+        <h3>สรุปตัวเลขสำคัญ</h3>
+        <div class="metrics-grid">
+            <div class="metric-item">
+                <div class="metric-value">1,369,400</div>
+                <div class="metric-title">รายได้รวม (บาท)</div>
+            </div>
+            <div class="metric-item">
+                <div class="metric-value">301</div>
+                <div class="metric-title">จำนวนการจองทั้งหมด</div>
+            </div>
+            <div class="metric-item">
+                <div class="metric-value" style="color: #27ae60;">83.6%</div>
+                <div class="metric-title">อัตราเข้าพักสำเร็จ</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <span class="step-label">Step 2: การแสดงผลกราฟ (Visualization)</span>
+        <h3>สถิติการใช้งานและรายได้</h3>
+        <div class="charts-container">
+            <div style="text-align: center;">
+                <h4>รายได้แยกตามประเภทห้อง (บาท)</h4>
+                <div class="chart-box">
+                    <canvas id="revenueChart"></canvas>
                 </div>
-                
-                <!-- Step 2 -->
-                <div class="relative z-10 flex flex-col items-center group">
-                    <div class="step-indicator w-12 h-12 rounded-full flex items-center justify-center border-4 border-white bg-white text-gray-400 font-bold text-lg shadow">
-                        2
-                    </div>
-                    <span class="text-sm font-medium mt-2 text-gray-500">กราฟสรุปยอดขาย</span>
-                </div>
-                
-                <!-- Step 3 -->
-                <div class="relative z-10 flex flex-col items-center group">
-                    <div class="step-indicator w-12 h-12 rounded-full flex items-center justify-center border-4 border-white bg-white text-gray-400 font-bold text-lg shadow">
-                        3
-                    </div>
-                    <span class="text-sm font-medium mt-2 text-gray-500">บทสรุปผู้บริหาร</span>
+            </div>
+            <div style="text-align: center;">
+                <h4>สัดส่วนสถานะการจอง</h4>
+                <div class="chart-box">
+                    <canvas id="statusChart"></canvas>
                 </div>
             </div>
         </div>
+    </div>
 
-        <!-- Step 1 Content -->
-        <div id="step1" class="fade-in">
-            <div class="bg-white rounded-2xl shadow-xl p-6 mb-6">
-                <div class="flex items-center justify-between border-b pb-4 mb-6">
-                    <h2 class="text-2xl font-bold text-amber-900 flex items-center gap-3">
-                        <i class="fas fa-table"></i>
-                        Step 1: สรุปข้อมูลดิบ (Data Summary)
-                    </h2>
-                    <span class="bg-amber-100 text-amber-800 px-3 py-1 rounded-full text-sm font-medium">
-                        25 Transactions
-                    </span>
+    <div class="card">
+        <span class="step-label">Step 3: สรุปเรื่องราวจากข้อมูล (Storytelling)</span>
+        <h3>บทวิเคราะห์ข้อมูล</h3>
+        <div class="story-content">
+            <div class="story-point">
+                <div class="story-icon">💡</div>
+                <div>
+                    <strong>ห้อง Suite ทำรายได้สูงสุด:</strong> แม้จำนวนการจองอาจจะไม่มากเท่าห้องประเภทอื่น แต่ห้อง Suite สร้างรายได้รวมสูงสุดถึง 479,700 บาท แสดงถึงกลุ่มลูกค้ากำลังซื้อสูง
                 </div>
-                
-                <div class="grid md:grid-cols-2 gap-8">
-                    <!-- Transaction Log -->
-                    <div class="border rounded-xl overflow-hidden shadow-sm">
-                        <div class="bg-gray-50 p-4 border-b font-semibold text-gray-700">
-                            รายการขายล่าสุด (Transaction Log)
-                        </div>
-                        <div class="h-80 overflow-y-auto scrollbar-custom">
-                            <table class="w-full text-sm">
-                                <thead class="bg-gray-100 sticky top-0">
-                                    <tr class="text-gray-600">
-                                        <th class="p-3 text-left">เวลา</th>
-                                        <th class="p-3 text-left">เมนู</th>
-                                        <th class="p-3 text-right">ราคา</th>
-                                        <th class="p-3 text-right">จำนวน</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr class="hover:bg-amber-50">
-                                        <td class="p-3 font-mono text-gray-500">06:15:00</td>
-                                        <td class="p-3 font-medium">Americano</td>
-                                        <td class="p-3 text-right">70</td>
-                                        <td class="p-3 text-right">1</td>
-                                    </tr>
-                                    <tr class="hover:bg-amber-50">
-                                        <td class="p-3 font-mono text-gray-500">06:20:00</td>
-                                        <td class="p-3 font-medium">Hot Latte</td>
-                                        <td class="p-3 text-right">80</td>
-                                        <td class="p-3 text-right">1</td>
-                                    </tr>
-                                    <tr class="hover:bg-amber-50">
-                                        <td class="p-3 font-mono text-gray-500">06:30:00</td>
-                                        <td class="p-3 font-medium">Sandwich</td>
-                                        <td class="p-3 text-right">85</td>
-                                        <td class="p-3 text-right">1</td>
-                                    </tr>
-                                    <tr class="hover:bg-amber-50">
-                                        <td class="p-3 font-mono text-gray-500">06:45:00</td>
-                                        <td class="p-3 font-medium">Americano</td>
-                                        <td class="p-3 text-right">70</td>
-                                        <td class="p-3 text-right">2</td>
-                                    </tr>
-                                    <tr class="hover:bg-amber-50">
-                                        <td class="p-3 font-mono text-gray-500">06:50:00</td>
-                                        <td class="p-3 font-medium">Croissant</td>
-                                        <td class="p-3 text-right">60</td>
-                                        <td class="p-3 text-right">1</td>
-                                    </tr>
-                                    <tr class="hover:bg-amber-50">
-                                        <td class="p-3 font-mono text-gray-500">07:05:00</td>
-                                        <td class="p-3 font-medium">Americano</td>
-                                        <td class="p-3 text-right">70</td>
-                                        <td class="p-3 text-right">1</td>
-                                    </tr>
-                                    <tr class="hover:bg-amber-50">
-                                        <td class="p-3 font-mono text-gray-500">07:10:00</td>
-                                        <td class="p-3 font-medium">Hot Latte</td>
-                                        <td class="p-3 text-right">80</td>
-                                        <td class="p-3 text-right">1</td>
-                                    </tr>
-                                    <tr class="hover:bg-amber-50">
-                                        <td class="p-3 font-mono text-gray-500">07:15:00</td>
-                                        <td class="p-3 font-medium">Americano</td>
-                                        <td class="p-3 text-right">70</td>
-                                        <td class="p-3 text-right">3</td>
-                                    </tr>
-                                    <tr class="hover:bg-amber-50">
-                                        <td class="p-3 font-mono text-gray-500">07:20:00</td>
-                                        <td class="p-3 font-medium">Cappuccino</td>
-                                        <td class="p-3 text-right">80</td>
-                                        <td class="p-3 text-right">1</td>
-                                    </tr>
-                                    <tr class="hover:bg-amber-50">
-                                        <td class="p-3 font-mono text-gray-500">07:30:00</td>
-                                        <td class="p-3 font-medium">Hot Latte</td>
-                                        <td class="p-3 text-right">80</td>
-                                        <td class="p-3 text-right">1</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                    
-                    <!-- Aggregated Data -->
-                    <div class="border border-amber-200 rounded-xl overflow-hidden shadow-sm">
-                        <div class="bg-amber-50 p-4 border-b border-amber-200 font-semibold text-amber-900">
-                            สรุปยอดขายแยกตามเมนู (Aggregated Data)
-                        </div>
-                        <div class="h-80 overflow-y-auto scrollbar-custom">
-                            <table class="w-full text-sm">
-                                <thead class="bg-amber-100 sticky top-0">
-                                    <tr class="text-amber-900">
-                                        <th class="p-3 text-left">เมนู</th>
-                                        <th class="p-3 text-right">ราคา/หน่วย</th>
-                                        <th class="p-3 text-right">ขายได้ (แก้ว/ชิ้น)</th>
-                                        <th class="p-3 text-right">รวมเป็นเงิน</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr class="hover:bg-amber-50">
-                                        <td class="p-3 font-medium">Americano</td>
-                                        <td class="p-3 text-right">70</td>
-                                        <td class="p-3 text-right font-semibold">12</td>
-                                        <td class="p-3 text-right font-bold text-amber-700">840 ฿</td>
-                                    </tr>
-                                    <tr class="hover:bg-amber-50">
-                                        <td class="p-3 font-medium">Hot Latte</td>
-                                        <td class="p-3 text-right">80</td>
-                                        <td class="p-3 text-right font-semibold">6</td>
-                                        <td class="p-3 text-right font-bold text-amber-700">480 ฿</td>
-                                    </tr>
-                                    <tr class="hover:bg-amber-50">
-                                        <td class="p-3 font-medium">Sandwich</td>
-                                        <td class="p-3 text-right">85</td>
-                                        <td class="p-3 text-right font-semibold">4</td>
-                                        <td class="p-3 text-right font-bold text-amber-700">340 ฿</td>
-                                    </tr>
-                                    <tr class="hover:bg-amber-50">
-                                        <td class="p-3 font-medium">Croissant</td>
-                                        <td class="p-3 text-right">60</td>
-                                        <td class="p-3 text-right font-semibold">5</td>
-                                        <td class="p-3 text-right font-bold text-amber-700">300 ฿</td>
-                                    </tr>
-                                    <tr class="hover:bg-amber-50">
-                                        <td class="p-3 font-medium">Cappuccino</td>
-                                        <td class="p-3 text-right">80</td>
-                                        <td class="p-3 text-right font-semibold">2</td>
-                                        <td class="p-3 text-right font-bold text-amber-700">160 ฿</td>
-                                    </tr>
-                                    <tr class="hover:bg-amber-50">
-                                        <td class="p-3 font-medium">Matcha Latte</td>
-                                        <td class="p-3 text-right">90</td>
-                                        <td class="p-3 text-right font-semibold">1</td>
-                                        <td class="p-3 text-right font-bold text-amber-700">90 ฿</td>
-                                    </tr>
-                                </tbody>
-                                <tfoot class="bg-amber-50 font-bold text-amber-900">
-                                    <tr>
-                                        <td class="p-3" colspan="2">Grand Total</td>
-                                        <td class="p-3 text-right">30</td>
-                                        <td class="p-3 text-right">2,210 ฿</td>
-                                    </tr>
-                                </tfoot>
-                            </table>
-                        </div>
-                    </div>
+            </div>
+            <div class="story-point">
+                <div class="story-icon">📊</div>
+                <div>
+                    <strong>อัตราความสำเร็จสูง:</strong> สถานะการจอง "Completed" (สำเร็จ) มีมากถึง 301 ครั้ง คิดเป็นกว่า 83% ของการจองทั้งหมด ซึ่งเป็นสัญญาณที่ดีในด้านการบริหารจัดการ
+                </div>
+            </div>
+            <div class="story-point">
+                <div class="story-icon">⚠️</div>
+                <div>
+                    <strong>การยกเลิกและไม่แสดงตัว:</strong> มีการยกเลิก (Cancelled) 30 ครั้ง และไม่แสดงตัว (No-Show) 19 ครั้ง รวมเป็นประมาณ 16% ควรตรวจสอบนโยบายการมัดจำเพื่อลดความเสี่ยงส่วนนี้
                 </div>
             </div>
         </div>
+    </div>
 
-        <!-- Step 2 Content (Hidden by default) -->
-        <div id="step2" class="hidden fade-in">
-            <div class="bg-white rounded-2xl shadow-xl p-6 mb-6">
-                <div class="flex items-center justify-between border-b pb-4 mb-6">
-                    <h2 class="text-2xl font-bold text-amber-900 flex items-center gap-3">
-                        <i class="fas fa-chart-line"></i>
-                        Step 2: ผลลัพธ์กราฟ (Chart Visualization)
-                    </h2>
-                </div>
-                
-                <div class="bg-white p-4 md:p-6 rounded-xl border border-gray-100 shadow-inner mb-6">
-                    <h3 class="text-center font-semibold text-gray-600 mb-6">
-                        เปรียบเทียบยอดขายรวม (บาท) แยกตามเมนู
-                    </h3>
-                    <div class="h-80 md:h-96">
-                        <canvas id="salesChart"></canvas>
-                    </div>
-                </div>
-                
-                <!-- Insight Box -->
-                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 md:p-6 flex items-start gap-4">
-                    <div class="bg-blue-100 p-2 rounded-full text-blue-600 mt-1">
-                        <i class="fas fa-chart-line"></i>
-                    </div>
-                    <div>
-                        <h4 class="font-semibold text-blue-800 text-lg mb-2">การวิเคราะห์เบื้องต้น</h4>
-                        <p class="text-blue-700">
-                            จากกราฟจะเห็นได้ว่า <strong>Americano</strong> เป็นสินค้าที่สร้างรายได้สูงสุด 
-                            รองลงมาคือ <strong>Hot Latte</strong> ซึ่งแสดงให้เห็นถึงความนิยมของสินค้ากลุ่มกาแฟหลัก
-                        </p>
-                    </div>
-                </div>
-            </div>
-        </div>
+</div>
 
-        <!-- Step 3 Content (Hidden by default) -->
-        <div id="step3" class="hidden fade-in">
-            <div class="bg-white rounded-2xl shadow-xl p-6 mb-6">
-                <div class="flex items-center justify-between border-b pb-4 mb-6">
-                    <h2 class="text-2xl font-bold text-amber-900 flex items-center gap-3">
-                        <i class="fas fa-coffee"></i>
-                        Step 3: บทวิเคราะห์และสรุป (Insights)
-                    </h2>
-                </div>
-                
-                <!-- KPI Cards -->
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                    <!-- Revenue Card -->
-                    <div class="bg-gradient-to-br from-green-50 to-emerald-100 p-6 rounded-2xl border border-green-200 card-hover">
-                        <div class="flex items-center gap-3 mb-4 text-green-800">
-                            <i class="fas fa-money-bill-wave"></i>
-                            <h3 class="font-semibold">รายได้รวม (Total Revenue)</h3>
-                        </div>
-                        <p class="text-3xl font-bold text-green-900 mb-2">2,210 ฿</p>
-                        <p class="text-sm text-green-700">จากรายการขายทั้งหมดช่วงเช้า</p>
-                    </div>
-                    
-                    <!-- Best Seller Card -->
-                    <div class="bg-gradient-to-br from-amber-50 to-orange-100 p-6 rounded-2xl border border-amber-200 card-hover">
-                        <div class="flex items-center gap-3 mb-4 text-amber-800">
-                            <i class="fas fa-shopping-bag"></i>
-                            <h3 class="font-semibold">สินค้าขายดี (Best Seller)</h3>
-                        </div>
-                        <p class="text-2xl font-bold text-amber-900 mb-2">Americano</p>
-                        <p class="text-sm text-amber-700">
-                            ขายได้ 12 รายการ (38.0% ของรายได้)
-                        </p>
-                    </div>
-                    
-                    <!-- Average Order Card -->
-                    <div class="bg-gradient-to-br from-blue-50 to-indigo-100 p-6 rounded-2xl border border-blue-200 card-hover">
-                        <div class="flex items-center gap-3 mb-4 text-blue-800">
-                            <i class="fas fa-clock"></i>
-                            <h3 class="font-semibold">ยอดขายเฉลี่ย (Avg Order)</h3>
-                        </div>
-                        <p class="text-3xl font-bold text-blue-900 mb-2">73 ฿</p>
-                        <p class="text-sm text-blue-700">ต่อหนึ่งรายการสินค้า</p>
-                    </div>
-                </div>
-                
-                <div class="grid md:grid-cols-2 gap-8">
-                    <!-- Business Suggestions -->
-                    <div class="bg-gray-50 p-6 rounded-xl">
-                        <h4 class="font-bold text-gray-800 mb-4 border-b pb-2 text-lg">คำแนะนำทางธุรกิจ (Business Suggestions)</h4>
-                        <ul class="space-y-4">
-                            <li class="flex gap-3 items-start">
-                                <span class="bg-green-100 text-green-700 p-1 rounded mt-1">
-                                    <i class="fas fa-check text-xs"></i>
-                                </span>
-                                <span class="text-gray-600">
-                                    <strong>รักษาฐานลูกค้า Americano:</strong> เนื่องจากเป็นสินค้าขายดี ควรตรวจสอบคุณภาพเมล็ดกาแฟให้คงที่เสมอ
-                                </span>
-                            </li>
-                            <li class="flex gap-3 items-start">
-                                <span class="bg-amber-100 text-amber-700 p-1 rounded mt-1">
-                                    <i class="fas fa-exclamation text-xs"></i>
-                                </span>
-                                <span class="text-gray-600">
-                                    <strong>การจับคู่สินค้า (Pairing):</strong> ยอดขาย Croissant และ Sandwich ยังไม่สูงมากเมื่อเทียบกับกาแฟ อาจทำโปรโมชั่น "Coffee + Bakery" ลด 10 บาทเพื่อกระตุ้นยอดขาย
-                                </span>
-                            </li>
-                            <li class="flex gap-3 items-start">
-                                <span class="bg-blue-100 text-blue-700 p-1 rounded mt-1">
-                                    <i class="fas fa-info text-xs"></i>
-                                </span>
-                                <span class="text-gray-600">
-                                    <strong>ช่วงเวลาเร่งด่วน:</strong> สังเกตว่าช่วง 7:00 - 8:30 มีรายการสั่งซื้อถี่ ควรเตรียมพนักงานให้พร้อมในช่วงเวลานี้
-                                </span>
-                            </li>
-                        </ul>
-                    </div>
-                    
-                    <!-- Revenue Distribution -->
-                    <div class="flex flex-col items-center justify-center p-6 border rounded-xl bg-white">
-                        <h4 class="font-bold text-gray-700 mb-4 text-lg">สัดส่วนรายได้</h4>
-                        <div class="w-64 h-64 mb-4">
-                            <canvas id="revenuePieChart"></canvas>
-                        </div>
-                        <p class="text-sm text-gray-500 text-center">วงในแสดงสัดส่วนยอดขายของแต่ละเมนู</p>
-                    </div>
-                </div>
-            </div>
-        </div>
+<script>
+    // --- Data Configuration (Based on your Excel file) ---
+    const roomTypes = ['Suite', 'Family', 'Deluxe', 'Standard'];
+    const roomRevenue = [479700, 361000, 264600, 264100];
+    
+    const statusLabels = ['Completed (สำเร็จ)', 'Cancelled (ยกเลิก)', 'No-Show (ไม่มา)'];
+    const statusData = [251, 30, 19];
 
-        <!-- Navigation Buttons -->
-        <div class="flex justify-between mt-8">
-            <button id="prevBtn" class="flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-colors bg-white border border-gray-300 text-gray-700 hover:bg-gray-50">
-                <i class="fas fa-arrow-left"></i>
-                ย้อนกลับ
-            </button>
-            <button id="nextBtn" class="flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-colors bg-amber-600 text-white hover:bg-amber-700 shadow-md">
-                ถัดไป
-                <i class="fas fa-arrow-right"></i>
-            </button>
-        </div>
-    </main>
-
-    <!-- Footer -->
-    <footer class="mt-12 pb-6 text-center text-gray-600 text-sm">
-        <p>© 2023 U Coffee Case Study - สำหรับการศึกษาเท่านั้น</p>
-        <p class="mt-1">ออกแบบและพัฒนาเพื่อการวิเคราะห์ข้อมูลธุรกิจร้านกาแฟ</p>
-    </footer>
-
-    <script>
-        // Initialize variables
-        let currentStep = 1;
-        
-        // Step data
-        const steps = [
-            { id: 1, title: 'ข้อมูลดิบ & ตารางสรุป', elementId: 'step1' },
-            { id: 2, title: 'กราฟสรุปยอดขาย', elementId: 'step2' },
-            { id: 3, title: 'บทสรุปผู้บริหาร', elementId: 'step3' }
-        ];
-        
-        // Sales data for charts
-        const salesData = [
-            { menu: 'Americano', sales: 840 },
-            { menu: 'Hot Latte', sales: 480 },
-            { menu: 'Sandwich', sales: 340 },
-            { menu: 'Croissant', sales: 300 },
-            { menu: 'Cappuccino', sales: 160 },
-            { menu: 'Matcha Latte', sales: 90 }
-        ];
-        
-        // Chart colors
-        const chartColors = ['#8B4513', '#D2691E', '#CD853F', '#DEB887', '#F4A460', '#A0522D'];
-        
-        // Initialize charts when page loads
-        document.addEventListener('DOMContentLoaded', function() {
-            initCharts();
-            updateStepIndicators();
-            setupEventListeners();
-        });
-        
-        // Initialize charts
-        function initCharts() {
-            // Bar chart for sales by menu
-            const salesCtx = document.getElementById('salesChart').getContext('2d');
-            new Chart(salesCtx, {
-                type: 'bar',
-                data: {
-                    labels: salesData.map(item => item.menu),
-                    datasets: [{
-                        label: 'ยอดขายรวม (Total Sales)',
-                        data: salesData.map(item => item.sales),
-                        backgroundColor: chartColors,
-                        borderColor: chartColors.map(color => color.replace('0.8', '1')),
-                        borderWidth: 1,
-                        borderRadius: 4
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'top',
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    return `${context.dataset.label}: ${context.parsed.y.toLocaleString()} บาท`;
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            ticks: {
-                                callback: function(value) {
-                                    return '฿' + value.toLocaleString();
-                                }
-                            }
-                        },
-                        x: {
-                            ticks: {
-                                maxRotation: 45,
-                                minRotation: 45
-                            }
+    // --- Chart 1: Bar Chart (Revenue) ---
+    const ctxBar = document.getElementById('revenueChart').getContext('2d');
+    new Chart(ctxBar, {
+        type: 'bar',
+        data: {
+            labels: roomTypes,
+            datasets: [{
+                label: 'รายได้รวม (บาท)',
+                data: roomRevenue,
+                backgroundColor: [
+                    'rgba(54, 162, 235, 0.7)', // Blue
+                    'rgba(255, 206, 86, 0.7)', // Yellow
+                    'rgba(75, 192, 192, 0.7)', // Teal
+                    'rgba(153, 102, 255, 0.7)' // Purple
+                ],
+                borderColor: [
+                    'rgba(54, 162, 235, 1)',
+                    'rgba(255, 206, 86, 1)',
+                    'rgba(75, 192, 192, 1)',
+                    'rgba(153, 102, 255, 1)'
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'จำนวนเงิน (บาท)'
+                    }
+                }
+            },
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return ' ' + context.parsed.y.toLocaleString() + ' บาท';
                         }
                     }
                 }
-            });
-            
-            // Pie chart for revenue distribution
-            const pieCtx = document.getElementById('revenuePieChart').getContext('2d');
-            new Chart(pieCtx, {
-                type: 'doughnut',
-                data: {
-                    labels: salesData.map(item => item.menu),
-                    datasets: [{
-                        data: salesData.map(item => item.sales),
-                        backgroundColor: chartColors,
-                        borderColor: '#ffffff',
-                        borderWidth: 2
-                    }]
+            }
+        }
+    });
+
+    // --- Chart 2: Doughnut Chart (Status) ---
+    const ctxDoughnut = document.getElementById('statusChart').getContext('2d');
+    new Chart(ctxDoughnut, {
+        type: 'doughnut',
+        data: {
+            labels: statusLabels,
+            datasets: [{
+                data: statusData,
+                backgroundColor: [
+                    '#2ecc71', // Green (Completed)
+                    '#e74c3c', // Red (Cancelled)
+                    '#95a5a6'  // Grey (No-Show)
+                ],
+                hoverOffset: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
                 },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'bottom',
-                            labels: {
-                                padding: 20,
-                                usePointStyle: true,
-                                pointStyle: 'circle'
-                            }
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    const total = salesData.reduce((sum, item) => sum + item.sales, 0);
-                                    const percentage = ((context.parsed / total) * 100).toFixed(1);
-                                    return `${context.label}: ${context.parsed.toLocaleString()} บาท (${percentage}%)`;
-                                }
-                            }
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            let value = context.parsed;
+                            let total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            let percentage = ((value / total) * 100).toFixed(1) + '%';
+                            return ` ${context.label}: ${value} (${percentage})`;
                         }
-                    },
-                    cutout: '60%'
+                    }
                 }
-            });
-        }
-        
-        // Update step indicators
-        function updateStepIndicators() {
-            const indicators = document.querySelectorAll('.step-indicator');
-            
-            indicators.forEach((indicator, index) => {
-                const stepNumber = index + 1;
-                
-                // Reset classes
-                indicator.classList.remove('active', 'completed', 'bg-amber-600', 'bg-white', 'bg-green-500', 'text-white', 'text-gray-400');
-                
-                if (stepNumber === currentStep) {
-                    // Current step
-                    indicator.classList.add('active', 'bg-amber-600', 'text-white');
-                    indicator.textContent = stepNumber;
-                } else if (stepNumber < currentStep) {
-                    // Completed step
-                    indicator.classList.add('completed', 'bg-green-500', 'text-white');
-                    indicator.innerHTML = '<i class="fas fa-check"></i>';
-                } else {
-                    // Future step
-                    indicator.classList.add('bg-white', 'text-gray-400');
-                    indicator.textContent = stepNumber;
-                }
-            });
-            
-            // Update step titles
-            document.querySelectorAll('.step-indicator + span').forEach((span, index) => {
-                if (index + 1 === currentStep) {
-                    span.classList.remove('text-gray-500');
-                    span.classList.add('text-amber-900');
-                } else {
-                    span.classList.remove('text-amber-900');
-                    span.classList.add('text-gray-500');
-                }
-            });
-        }
-        
-        // Show/hide step content
-        function showStep(stepNumber) {
-            // Hide all steps
-            steps.forEach(step => {
-                const element = document.getElementById(step.elementId);
-                if (element) {
-                    element.classList.add('hidden');
-                }
-            });
-            
-            // Show current step
-            const currentStepElement = document.getElementById(steps[stepNumber - 1].elementId);
-            if (currentStepElement) {
-                currentStepElement.classList.remove('hidden');
-                currentStepElement.classList.add('fade-in');
-            }
-            
-            // Update current step
-            currentStep = stepNumber;
-            updateStepIndicators();
-            
-            // Update button states
-            updateButtonStates();
-        }
-        
-        // Update button states
-        function updateButtonStates() {
-            const prevBtn = document.getElementById('prevBtn');
-            const nextBtn = document.getElementById('nextBtn');
-            
-            // Previous button
-            if (currentStep === 1) {
-                prevBtn.disabled = true;
-                prevBtn.classList.add('opacity-50', 'cursor-not-allowed');
-                prevBtn.classList.remove('hover:bg-gray-50');
-            } else {
-                prevBtn.disabled = false;
-                prevBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-                prevBtn.classList.add('hover:bg-gray-50');
-            }
-            
-            // Next button
-            if (currentStep === 3) {
-                nextBtn.disabled = true;
-                nextBtn.classList.add('opacity-50', 'cursor-not-allowed');
-                nextBtn.classList.remove('hover:bg-amber-700');
-            } else {
-                nextBtn.disabled = false;
-                nextBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-                nextBtn.classList.add('hover:bg-amber-700');
             }
         }
-        
-        // Setup event listeners
-        function setupEventListeners() {
-            // Next button
-            document.getElementById('nextBtn').addEventListener('click', function() {
-                if (currentStep < 3) {
-                    showStep(currentStep + 1);
-                }
-            });
-            
-            // Previous button
-            document.getElementById('prevBtn').addEventListener('click', function() {
-                if (currentStep > 1) {
-                    showStep(currentStep - 1);
-                }
-            });
-            
-            // Step indicators click
-            document.querySelectorAll('.step-indicator').forEach((indicator, index) => {
-                indicator.addEventListener('click', function() {
-                    showStep(index + 1);
-                });
-            });
-            
-            // Initialize button states
-            updateButtonStates();
-        }
-    </script>
+    });
+</script>
+
 </body>
 </html>
